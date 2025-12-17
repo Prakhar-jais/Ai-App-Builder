@@ -1,0 +1,34 @@
+package com.client.project.app_builder.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.Instant;
+
+@Getter
+@Setter
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+
+@Table(name = "users")
+public class User {
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String email;
+    private String passwordHash;
+    private String name;
+    private String avatarUrl;
+
+    @CreationTimestamp
+    private Instant createdAt;
+    private Instant deletedAt;
+    @UpdateTimestamp
+    private Instant updatedAt;
+}
