@@ -10,6 +10,7 @@ import com.client.project.app_builder.mapper.ProjectMapper;
 import com.client.project.app_builder.repository.ProjectMemberRepository;
 import com.client.project.app_builder.repository.ProjectRepository;
 import com.client.project.app_builder.repository.UserRepository;
+import com.client.project.app_builder.security.AuthUtil;
 import com.client.project.app_builder.service.ProjectService;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -32,27 +33,40 @@ public class ProjectServiceImpl implements ProjectService {
     UserRepository userRepository;
     ProjectMapper projectMapper;
     ProjectMemberRepository projectMemberRepository;
+    AuthUtil authUtil;
+
 
     @Override
-    public List<ProjectSummaryResponse> getUserProjects(Long userId) {
+    public List<ProjectSummaryResponse> getUserProjects() {
+        Long userId = authUtil.getCurrentUserId();
 
         return projectMapper.toListOfProjectSummaryResponse(projectRepository.findAllAccessibleByUser(userId));
     }
 
     @Override
-    public ProjectResponse getUserProjectById(Long id, Long userId) {
+    public ProjectResponse getUserProjectById(Long id) {
+        Long userId = authUtil.getCurrentUserId();
 
         Project project = projectRepository.findAccessibleProjectById(id,userId).orElseThrow();
         return projectMapper.toProjectResponse(project);
     }
 
     @Override
-    public ProjectResponse createProject(ProjectRequest request, Long userId) {
-        User owner = userRepository.findById(userId).orElseThrow(()-> new ResourceNotFoundException("User",userId.toString()));
+    public ProjectResponse createProject(ProjectRequest request) {
+        Long userId = authUtil.getCurrentUserId();
+
+//        User owner = userRepository.findById(userId)
+//                .orElseThrow(()-> new ResourceNotFoundException("User",userId.toString()));
+//
+         // instead of above code use proxy object to get the owner refrence that is  for lazy loading get only refrence
+        User owner = userRepository.getReferenceById(userId);
+
         Project project = Project.builder()
                 .name(request.name())
                 .isPublic(false)
                 .build();
+
+
         project = projectRepository.save(project);
 
         ProjectMemberId  projectMemberId = new ProjectMemberId(project.getId(),owner.getId());
@@ -73,17 +87,18 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectResponse updateProject(Long id, ProjectRequest request, Long userId) {
+    public ProjectResponse updateProject(Long id, ProjectRequest request) {
+        Long userId = authUtil.getCurrentUserId();
 
         Project project = projectRepository.findAccessibleProjectById(id,userId).orElseThrow();
-
         project.setName(request.name());
         project = projectRepository.save(project);
         return projectMapper.toProjectResponse(project);
     }
 
     @Override
-    public void softDelete(Long id, Long userId) {
+    public void softDelete(Long id) {
+        Long userId = authUtil.getCurrentUserId();
         Project project = getAccessibleProjectById(id,userId);
 
         project.setDeletedAt(Instant.now());
@@ -93,6 +108,8 @@ public class ProjectServiceImpl implements ProjectService {
 
     // Internal Functions
     public Project getAccessibleProjectById(Long projectId,Long userId){
+
+
         return projectRepository.findAccessibleProjectById(projectId,userId).orElseThrow(()->new ResourceNotFoundException("Project",projectId.toString()));
     }
 }

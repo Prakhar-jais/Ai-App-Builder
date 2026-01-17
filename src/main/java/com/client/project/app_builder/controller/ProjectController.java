@@ -3,6 +3,7 @@ package com.client.project.app_builder.controller;
 import com.client.project.app_builder.dto.project.ProjectRequest;
 import com.client.project.app_builder.dto.project.ProjectResponse;
 import com.client.project.app_builder.dto.project.ProjectSummaryResponse;
+import com.client.project.app_builder.security.AuthUtil;
 import com.client.project.app_builder.service.ProjectService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -22,37 +23,39 @@ import java.util.List;
 
 public class ProjectController {
 
-    ProjectService projectService;// all these fields must be private and final if you want lombok to make constructor injection else it would be null
+    private final ProjectService projectService;// all these fields must be private and final if you want lombok to make constructor injection else it would be null
+    private final AuthUtil authUtil;
+
 
     @GetMapping
     public ResponseEntity<List<ProjectSummaryResponse>> getMyProjects(){
         // can only be called by someone who is currently logged in
-        Long userId = 1L; // TODO : update later with real spring security
 
-        return ResponseEntity.ok(projectService.getUserProjects(userId));
+//        // TODO : update later with real spring security
+
+        return ResponseEntity.ok(projectService.getUserProjects());
     }
     @GetMapping("/{id}")
     public ResponseEntity<ProjectResponse> getProjectById(@PathVariable Long id){
-        Long userId = 1L;
-        return ResponseEntity.ok(projectService.getUserProjectById(id,userId));
+
+        return ResponseEntity.ok(projectService.getUserProjectById(id));
     }
 
     @PostMapping
     public ResponseEntity<ProjectResponse> createProject(@RequestBody @Valid ProjectRequest request){
-        Long userId = 1L;
-        return ResponseEntity.status(HttpStatus.CREATED).body(projectService.createProject(request,userId));
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(projectService.createProject(request));
     }
 
     @PostMapping("/{id}")
     public ResponseEntity<ProjectResponse> updateProject(@PathVariable Long id,@RequestBody @Valid ProjectRequest request){
-        Long userId = 1L;
-        return ResponseEntity.ok(projectService.updateProject(id,request,userId));
+        return ResponseEntity.ok(projectService.updateProject(id,request));
     }
 
     @DeleteMapping
     public ResponseEntity<Void> deleteProject(@PathVariable Long id){
-        Long userId = 1L;
-        projectService.softDelete(id,userId);
+
+        projectService.softDelete(id);
         return ResponseEntity.noContent().build();
     }
 
